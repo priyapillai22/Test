@@ -36,28 +36,30 @@ The user operates the tool from a single control sheet ("Stores") using a set of
 
 ### 3.1 Configuration Cells (User Input)
 
-| Cell | Label / Name | What the user enters | How it is used |
-|---|---|---|---|
-| **G2** | Processing date | Date for which payroll must be extracted (auto-set to today on open) | Passed as `@ForDate` parameter to the SQL stored procedure |
-| **G3** | Store file path | Full path to the `.dat` store list file on disk | Read by "Reload Stores" to build the store table |
-| **G4** | Standards file path | Full path to the external Standards Excel reference file | Read by "Reload Standards" to update wksStandard formulas |
-| **I5** | Separator | Character used as column separator in the CSV output (e.g. `;`) | Passed to `SaveSheetToTXTFile` when writing `HR-payroll.csv` |
-| **I6** | JustOneDay checkbox | TRUE = extract only the single day in G2; FALSE = extract the full period | Passed as `@JustOneDay` (1 or 0) to the SQL stored procedure |
+The table below lists every cell the user can edit on the Stores sheet. The **Label / Name** column is used throughout this document whenever a cell is referenced, to avoid relying on cell coordinates alone.
 
-> **Important validation:** If `I6 = TRUE` and `G2 = today's date`, the workbook blocks the operation with an error message: *"Can't use JustOneDay for TODAY. Change the date first."* This prevents accidentally pulling incomplete same-day data.
+| Cell | Label / Name | Column heading shown in sheet | What the user enters | How it is used |
+|---|---|---|---|---|
+| **G2** | **Processing Date** | "For Date" | Date for which payroll must be extracted (auto-set to today on open) | Passed as `@ForDate` parameter to the SQL stored procedure |
+| **G3** | **Store File Path** | "Store file" | Full path to the `.dat` store list file on disk | Read by "Reload Stores" to build the store table |
+| **G4** | **Standards File Path** | "Standards file" | Full path to the external Standards Excel reference file | Read by "Reload Standards" to update wksStandard formulas |
+| **I5** | **CSV Separator** | "Separator" | Character used as column separator in the CSV output (e.g. `;`) | Passed to `SaveSheetToTXTFile` when writing `HR-payroll.csv` |
+| **I6** | **JustOneDay Flag** | "Just one day" | TRUE = extract only the single day in **Processing Date**; FALSE = extract the full period | Passed as `@JustOneDay` (1 or 0) to the SQL stored procedure |
+
+> **Important validation:** If **JustOneDay Flag** (`I6`) = TRUE and **Processing Date** (`G2`) = today's date, the workbook blocks the operation with an error message: *"Can't use JustOneDay for TODAY. Change the date first."* This prevents accidentally pulling incomplete same-day data.
 
 ### 3.2 Status / Output Cells (Read-only for user)
 
-| Cell | What it shows |
-|---|---|
-| **F9** | Start time of the last operation (hh:mm:ss) |
-| **F10** | End time of the last operation (hh:mm:ss) |
-| **G9** | Total elapsed duration of the last operation |
-| **H8** | Count of stores connected (after Ping) / stores successfully imported (after Run) |
-| **H10** | Average processing time per store |
-| **G5** | Timestamp when Standards were last reloaded |
-| **H7** | Timestamp when the last "Run in all stores" was completed |
-| **I3** | Count of stores that were successfully imported (used in final message box comparison) |
+| Cell | Label / Name | What it shows |
+|---|---|---|
+| **F9** | **Operation Start Time** | Start time of the last operation (hh:mm:ss) |
+| **F10** | **Operation End Time** | End time of the last operation (hh:mm:ss) |
+| **G9** | **Elapsed Duration** | Total elapsed duration of the last operation |
+| **H8** | **Store Count** | Count of stores connected (after Ping) / stores successfully imported (after Run) |
+| **H10** | **Avg Time Per Store** | Average processing time per store |
+| **G5** | **Standards Reload Timestamp** | Timestamp when Standards were last reloaded |
+| **H7** | **Last Run Timestamp** | Timestamp when the last "Run in all stores" was completed |
+| **I3** | **Imported Store Count** | Count of stores that were successfully imported (used in final message box comparison) |
 
 ### 3.3 Store List (Rows 2 onward)
 
@@ -85,10 +87,10 @@ The workflow is sequential. A green circle indicator moves to the *next* button 
 **What happens:**
 1. Opens a standard Windows file-open dialog.
 2. User browses to and selects a `.dat` text file (the store master file).
-3. The chosen full file path is written into cell **G3** of the Stores sheet.
+3. The chosen full file path is written into **G3 — Store File Path** on the Stores sheet.
 
 **Input from user:** The `.dat` file to select.  
-**Output:** Cell G3 updated with the file path. No other changes.
+**Output:** **G3 — Store File Path** updated with the file path. No other changes.
 
 ---
 
@@ -100,10 +102,10 @@ The workflow is sequential. A green circle indicator moves to the *next* button 
 **What happens:**
 1. Opens a standard Windows file-open dialog.
 2. User selects an external Excel reference file.
-3. The chosen full file path is written into cell **G4** of the Stores sheet.
+3. The chosen full file path is written into **G4 — Standards File Path** on the Stores sheet.
 
 **Input from user:** The external Standards Excel file to select.  
-**Output:** Cell G4 updated with the file path. No other changes.
+**Output:** **G4 — Standards File Path** updated with the file path. No other changes.
 
 ---
 
@@ -113,29 +115,29 @@ The workflow is sequential. A green circle indicator moves to the *next* button 
 **When to click:** After loading the store file (Button 1), or whenever the store list may have changed.
 
 **What happens step by step:**
-1. Records start time in **F9**.
+1. Records start time in **F9 — Operation Start Time**.
 2. Clears the Result sheet (from row 3 downward).
 3. Clears the store list table (column A–E, from row 11 downward) on the Stores sheet.
 4. Saves the workbook.
-5. Reads the `.dat` file at the path in **G3** via ADODB.Stream (encoding: `iso-8859-1`).
+5. Reads the `.dat` file at the path in **G3 — Store File Path** via ADODB.Stream (encoding: `iso-8859-1`).
 6. Parses each line:
    - Lines starting with `*` → 6-char prefix = inactive store (column A left blank).
    - Lines with a 5-char store number → column A = `"V"`, column B = store number, column C = store name.
    - Lines shorter than 6 chars are ignored.
 7. Draws borders around the store table.
-8. Sets **H8** formula: `=COUNTIF(A:A,"V")` — counts active stores.
-9. Records reload timestamp in **G3** (date+time).
+8. Sets **H8 — Store Count** formula: `=COUNTIF(A:A,"V")` — counts active stores.
+9. Records reload timestamp in **G3 — Store File Path** (date+time appended).
 10. Auto-fits all columns, then sets fixed widths for columns E–I.
 11. Marks the **[Ping]** button with a green circle (= next step).
-12. Records end time / duration in **F10 / G9 / H10**.
+12. Records end time / duration in **F10 — Operation End Time** / **G9 — Elapsed Duration** / **H10 — Avg Time Per Store**.
 
 **Input:**  
-- `.dat` file (path from G3). Format: one store per line, first 5 chars = store number, remainder = store name.
+- `.dat` file (path from **G3 — Store File Path**). Format: one store per line, first 5 chars = store number, remainder = store name.
 
 **Output on screen:**  
 - The Stores sheet store table is populated (columns A–C).
-- H8 shows count of active stores.
-- Processing time shown in F9/F10/G9/H10.
+- **H8 — Store Count** shows count of active stores.
+- Processing time shown in **F9 — Operation Start Time** / **F10 — Operation End Time** / **G9 — Elapsed Duration** / **H10 — Avg Time Per Store**.
 
 **No external files written.**
 
@@ -147,10 +149,10 @@ The workflow is sequential. A green circle indicator moves to the *next* button 
 **When to click:** After reloading stores, to verify which stores are reachable over the network before attempting data extraction.
 
 **What happens step by step:**
-1. Records start time in **F9**.
+1. Records start time in **F9 — Operation Start Time**.
 2. Clears the Result sheet.
-3. For every row where column A = `"V"`:
-   a. Converts the store number (column B) to a DNS hostname using the pattern:  
+3. For every row where column A (Active Flag) = `"V"`:
+   a. Converts the store number (column B — Store Number) to a DNS hostname using the pattern:  
       `dp` + *lowercase country code* + *store number* + `.dpev.net`  
       Country is determined by store number range:
 
@@ -166,22 +168,22 @@ The workflow is sequential. A green circle indicator moves to the *next* button 
 
    b. Sends a WMI ping (`Win32_PingStatus`) to the hostname.
    c. If not connected: waits 1 second and pings again.
-   d. Writes the result to **column D** of that store row:
+   d. Writes the result to **column D (Ping Result)** of that store row:
       - `"Connected"` — store is reachable
       - `"Request timed out"` — store not responding
       - `"Destination host unreachable"` — routing failure
       - Various other WMI status descriptions
-   e. If still not `"Connected"`: **clears column A** for that row → store is deactivated and will be skipped in the next step.
-4. Sets **H8**: `=COUNTIF(D:D,"Connected")` — count of reachable stores.
-5. Auto-fits column D.
+   e. If still not `"Connected"`: **clears column A (Active Flag)** for that row → store is deactivated and will be skipped in the next step.
+4. Sets **H8 — Store Count**: `=COUNTIF(D:D,"Connected")` — count of reachable stores.
+5. Auto-fits column D (Ping Result).
 6. Marks the **[Run In Stores]** button with a green circle.
 7. Records end time / duration.
 
 **Input:** None (reads store table from Stores sheet).  
 **Output on screen:**
-- Column D filled with `"Connected"` or error messages.
-- Unreachable stores: column A cleared (deactivated).
-- H8 shows count of reachable stores.
+- Column D (Ping Result) filled with `"Connected"` or error messages.
+- Unreachable stores: column A (Active Flag) cleared (deactivated).
+- **H8 — Store Count** shows count of reachable stores.
 
 **No external files written.**
 
@@ -193,17 +195,17 @@ The workflow is sequential. A green circle indicator moves to the *next* button 
 **When to click:** When the Standards reference file has changed or moved.
 
 **What happens step by step:**
-1. Records start time in **F9**.
+1. Records start time in **F9 — Operation Start Time**.
 2. Clears the Result sheet.
-3. Checks that the file at path **G4** exists — if not, shows error and exits.
-4. Scans the `wksStandard` sheet formulas to find external file references and replaces the old file path with the new one from G4 (`ReplaceRef`).
+3. Checks that the file at path **G4 — Standards File Path** exists — if not, shows error and exits.
+4. Scans the `wksStandard` sheet formulas to find external file references and replaces the old file path with the new one from **G4 — Standards File Path** (`ReplaceRef`).
 5. Finds the row in `wksStandard` with the label `"Standard"` in column A.
 6. Fills formula(s) downward from that row (auto-fills relative references).
-7. Records timestamp in **G5**.
+7. Records timestamp in **G5 — Standards Reload Timestamp**.
 8. Marks the **[Run In Stores]** button with a green circle.
 9. Records end time / duration.
 
-**Input:** External Standards Excel file (path from G4).  
+**Input:** External Standards Excel file (path from **G4 — Standards File Path**).  
 **Output:** `wksStandard` sheet formulas updated. No external files written.
 
 ---
@@ -216,21 +218,21 @@ The workflow is sequential. A green circle indicator moves to the *next* button 
 **What happens — full pipeline:**
 
 #### Phase 1 — Preparation
-1. Records start time in **F9**.
+1. Records start time in **F9 — Operation Start Time**.
 2. Clears the Result sheet (removes old data).
 3. Saves the workbook (ensures a clean recovery point).
 
 #### Phase 2 — SQL Data Extraction (per store)
-4. Reads the processing date from **G2**, formats as `yyyy-mm-dd`.
-5. Reads the separator from **I5** and JustOneDay flag from **I6**.
+4. Reads the processing date from **G2 — Processing Date**, formats as `yyyy-mm-dd`.
+5. Reads the separator from **I5 — CSV Separator** and JustOneDay flag from **I6 — JustOneDay Flag**.
 6. Builds the SQL call:
    ```sql
    EXEC DPEU.dbo.spDOM_ExtractPayrollNmbrsNL
-     @ForDate = '<date from G2>',
+     @ForDate = '<date from G2 — Processing Date>',
      @Header  = 0,
-     @JustOneDay = <0 or 1 from I6>
+     @JustOneDay = <0 or 1 from I6 — JustOneDay Flag>
    ```
-7. For every store where column A = `"V"` and column B is not empty:
+7. For every store where column A (Active Flag) = `"V"` and column B (Store Number) is not empty:
    - Resolves store number → DNS hostname (same logic as Ping).
    - Connects to that store's SQL Server:
      - Provider: `SQLOLEDB.1`
@@ -309,8 +311,8 @@ The workflow is sequential. A green circle indicator moves to the *next* button 
 
 #### Phase 12 — Final Status
 29. Records completion timestamp and imported store count.
-30. Updates **H8** formula: `=COUNTIF(E:E,"V")` (count of successfully imported stores).
-31. Applies red conditional formatting to column E for `"X"` rows (failed stores).
+30. Updates **H8 — Store Count** formula: `=COUNTIF(E:E,"V")` (count of successfully imported stores).
+31. Applies red conditional formatting to column E (Import Result) for `"X"` rows (failed stores).
 32. Shows a message box:
     - If all stores imported: `"Imported: X stores."`
     - If some failed: `"Not all stores imported. Stores: X. Imported: Y."`
@@ -323,7 +325,7 @@ The workflow is sequential. A green circle indicator moves to the *next* button 
 
 | File | Location | Format | Content | Used by |
 |---|---|---|---|---|
-| `HR-payroll.csv` | Same folder as the .xlsm | CSV (separator from I5) | All raw payroll rows from all stores, including manager column, multi-store annotations | Internal HR / reporting / audit trail |
+| `HR-payroll.csv` | Same folder as the .xlsm | CSV (separator from **I5 — CSV Separator**) | All raw payroll rows from all stores, including manager column, multi-store annotations | Internal HR / reporting / audit trail |
 | `LooncomponentenVar.xlsx` | Same folder as the .xlsm | Excel (.xlsx or .xlsb) | Variable salary component records per employee, formatted for Nmbrs import (no managers, no amounts in col H) | **Nmbrs payroll import — salary components** |
 | `KostenverdelingLooncomponenten.xlsx` | Same folder as the .xlsm | Excel (.xlsx or .xlsb) | Cost-centre allocation per salary component, with period dates, cost code U2101, rounded amounts, cost type codes | **Nmbrs payroll import — cost allocation** |
 
@@ -380,44 +382,199 @@ Column mapping in KostenverdelingLooncomponenten:
 
 ---
 
-## 8. Typical User Workflow
+## 8. User Flow
+
+This section describes the complete journey a payroll administrator takes each time they use the tool, including first-time setup and recurring weekly/monthly usage.
+
+---
+
+### 8.1 First-Time Setup (do once per installation)
+
+These steps only need to be performed once, or whenever files are moved to a new location.
 
 ```
-Step 1  Open the workbook
-        → Today's date auto-set in G2
-        → Workbook backup automatically created
-        → Green circle on [Ping] button
-
-Step 2  (First time only) Click [Load Store File]
-        → Browse to the stores.dat file
-        → Path saved in G3
-
-Step 3  (First time only) Click [Load Standards File]
-        → Browse to the Standards reference file
-        → Path saved in G4
-
-Step 4  Click [Reload Stores]
-        → Store list populated from .dat file
-        → Active stores marked "V" in column A
-
-Step 5  Click [Ping All Stores]
-        → Each store pinged over the network
-        → Unreachable stores deactivated
-        → Column D shows connectivity status
-
-Step 6  (Optional) Adjust date in G2 if not running for today
-        (Optional) Check/uncheck JustOneDay in I6
-
-Step 7  (Optional) Click [Reload Standards] if Standards file changed
-
-Step 8  Click [Run In All Stores]  ← MAIN ACTION
-        → SQL data extracted from all connected stores
-        → Multi-store employees corrected
-        → Manager names added
-        → 3 output files saved to disk
-        → Nmbrs pivot updated
-        → Summary message box shown
+┌─────────────────────────────────────────────────────────────────────┐
+│ FIRST-TIME SETUP                                                    │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  1. Open the .xlsm workbook in Excel.                               │
+│     → Excel may show a security bar: click [Enable Content]         │
+│       to allow macros to run.                                       │
+│     → Today's date is automatically filled into                     │
+│       G2 — Processing Date.                                         │
+│     → A backup copy of the workbook is saved automatically.         │
+│                                                                     │
+│  2. Click [Load Store File].                                        │
+│     → A file-open dialog appears.                                   │
+│     → Navigate to and select the stores master file (*.dat).        │
+│     → The full file path is stored in G3 — Store File Path.        │
+│                                                                     │
+│  3. Click [Load Standards File].                                    │
+│     → A file-open dialog appears.                                   │
+│     → Navigate to and select the external Standards Excel file.     │
+│     → The full file path is stored in G4 — Standards File Path.    │
+│                                                                     │
+│  First-time setup complete. Proceed to the recurring usage flow.    │
+└─────────────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+### 8.2 Recurring Usage — Weekly / Period-End Run
+
+Perform these steps every time payroll data needs to be extracted and uploaded to Nmbrs.
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│ STEP 1 — Open the workbook                                          │
+│                                                                     │
+│  Open the .xlsm file.                                               │
+│  → G2 — Processing Date is auto-set to today.                      │
+│  → Green circle indicator sits on [Ping All Stores] button.        │
+│                                                                     │
+│  ┌─ Decision: Is today the right date for this run? ──────────┐    │
+│  │  YES → continue to Step 2.                                  │    │
+│  │  NO  → manually edit G2 — Processing Date to the correct   │    │
+│  │         period date before continuing.                       │    │
+│  └──────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ STEP 2 — Reload the store list (if store list has changed)          │
+│                                                                     │
+│  ┌─ Decision: Has the stores.dat file been updated? ──────────┐    │
+│  │  YES → click [Reload Stores].                               │    │
+│  │         → Stores sheet table is cleared and rebuilt from    │    │
+│  │           G3 — Store File Path.                             │    │
+│  │         → Active stores shown with "V" in column A          │    │
+│  │           (Active Flag).                                     │    │
+│  │         → H8 — Store Count shows total active stores.       │    │
+│  │  NO  → skip to Step 3.                                       │    │
+│  └──────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ STEP 3 — Ping all stores (network connectivity check)               │
+│                                                                     │
+│  Click [Ping All Stores].                                           │
+│  → Each active store is pinged over the dpev.net network.          │
+│  → Column D (Ping Result) is filled per store:                     │
+│      • "Connected"                  — store is reachable            │
+│      • "Request timed out"          — store not responding         │
+│      • "Destination host unreachable" — network routing issue      │
+│  → Stores that are NOT "Connected" are automatically               │
+│    deactivated (column A — Active Flag cleared).                   │
+│  → H8 — Store Count now shows count of reachable stores.          │
+│                                                                     │
+│  ┌─ Decision: Are all expected stores showing "Connected"? ───┐    │
+│  │  YES → continue to Step 4.                                  │    │
+│  │  NO  → investigate network / VPN issues for the missing    │    │
+│  │         stores, then re-ping if needed. You may proceed     │    │
+│  │         with only the reachable stores if acceptable.       │    │
+│  └──────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ STEP 4 — (Optional) Adjust JustOneDay setting                       │
+│                                                                     │
+│  ┌─ Decision: Do you need only a single day's data? ──────────┐    │
+│  │  YES → set I6 — JustOneDay Flag = TRUE.                     │    │
+│  │         ⚠ Make sure G2 — Processing Date is NOT today,     │    │
+│  │           otherwise the run will be blocked.                │    │
+│  │  NO  → leave I6 = FALSE (default, extracts full period).    │    │
+│  └──────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ STEP 5 — (Optional) Reload Standards                                │
+│                                                                     │
+│  ┌─ Decision: Has the Standards reference file changed? ──────┐    │
+│  │  YES → click [Reload Standards].                            │    │
+│  │         → Formulas in wksStandard are updated to point to   │    │
+│  │           the file at G4 — Standards File Path.             │    │
+│  │         → G5 — Standards Reload Timestamp is updated.       │    │
+│  │  NO  → skip to Step 6.                                       │    │
+│  └──────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ STEP 6 — Run extraction (MAIN ACTION)                               │
+│                                                                     │
+│  Click [Run In All Stores].                                         │
+│                                                                     │
+│  The workbook now automatically:                                    │
+│  a) Connects to each reachable store's SQL Server database.        │
+│  b) Executes the payroll extraction stored procedure, using        │
+│     G2 — Processing Date and I6 — JustOneDay Flag as parameters.  │
+│  c) Appends returned rows to the Result sheet.                     │
+│  d) Marks column E (Import Result) per store:                      │
+│       "V" = imported successfully  |  "X" = failed (red)          │
+│  e) Remaps debtor numbers for multi-store employees                │
+│     (orange highlight, note in column M of Result).                │
+│  f) Adds manager names to column L of Result.                      │
+│  g) Saves raw data as HR-payroll.csv (separator from               │
+│     I5 — CSV Separator).                                           │
+│  h) Removes overhead cost centres (dept codes 099/99).             │
+│  i) Builds and saves two Nmbrs import files:                       │
+│       • LooncomponentenVar.xlsx                                    │
+│       • KostenverdelingLooncomponenten.xlsx                        │
+│  j) Refreshes the Telling pivot (multi-store duplicate check).     │
+│  k) Shows a summary message box.                                   │
+│                                                                     │
+│  ┌─ Decision: Did all stores import successfully? ────────────┐    │
+│  │  YES → proceed to Step 7.                                   │    │
+│  │  NO  → check column D (Ping Result) and column E           │    │
+│  │         (Import Result) to identify which stores failed.    │    │
+│  │         Investigate connectivity / database issues.         │    │
+│  │         Re-run [Ping All Stores] and [Run In All Stores]    │    │
+│  │         for the failed stores if needed.                    │    │
+│  └──────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ STEP 7 — Review duplicate employees (optional quality check)        │
+│                                                                     │
+│  Switch to the Telling sheet.                                       │
+│  → The pivot table lists employees by store.                       │
+│  → Column E (<=) shows "<=" for employees appearing at more than   │
+│    one store.                                                       │
+│  → Use the AutoFilter on column E to quickly review multi-store   │
+│    employees and confirm their debtor remapping is correct.        │
+│                                                                     │
+│  ┌─ Decision: Are there unexpected duplicates? ───────────────┐    │
+│  │  YES → check the MultiMW sheet for correct mappings.        │    │
+│  │  NO  → proceed to Step 8.                                   │    │
+│  └──────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ STEP 8 — Upload to Nmbrs                                            │
+│                                                                     │
+│  Locate the two output files in the same folder as the .xlsm:     │
+│    • LooncomponentenVar.xlsx  → import via Nmbrs                   │
+│                                  "Looncomponenten" import screen   │
+│    • KostenverdelingLooncomponenten.xlsx → import via Nmbrs        │
+│                                  "Kostenplaats" import screen      │
+│                                                                     │
+│  The HR-payroll.csv file is kept for internal audit / reporting.   │
+│                                                                     │
+│  Run complete. ✓                                                    │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 8.3 Quick Reference — What to Check When Something Goes Wrong
+
+| Symptom | Where to look | Action |
+|---|---|---|
+| Store not in the list | G3 — Store File Path / stores.dat | Re-run [Reload Stores] after updating the .dat file |
+| Store shows "Request timed out" | Column D — Ping Result | Check VPN / network connection to that store's server |
+| Store shows "X" after Run | Column E — Import Result | Check SQL Server availability; re-run for that store |
+| Wrong date in output files | G2 — Processing Date | Correct the date before running |
+| Multi-store employee has wrong debtor | Result sheet column M / MultiMW sheet | Update MultiMW lookup table and re-run |
+| Standards formulas broken | G4 — Standards File Path / G5 — Standards Reload Timestamp | Re-run [Load Standards File] and [Reload Standards] |
+| JustOneDay blocked by today's date | G2 — Processing Date + I6 — JustOneDay Flag | Change G2 to a past date before enabling JustOneDay |
 
 ---
 
