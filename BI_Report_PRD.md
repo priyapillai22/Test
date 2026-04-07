@@ -79,71 +79,174 @@ The report reads from files that are already produced by the existing payroll to
 
 ## 5. What Will the Report Show? (Features)
 
+---
+
 ### 5.1 Main Summary Dashboard
 *For: HR Manager, Finance*
 
-This is the **home screen** of the report. It shows:
+This is the **home screen** of the report — the first thing you see when you open it. It gives you the big picture at a glance.
 
-- 📦 **Total Payroll Cost** — the total wage bill for the selected period
-- 👥 **Total Headcount** — how many employees were paid
-- ✅ **Stores Imported OK** — how many stores successfully sent their data
-- ❌ **Stores Failed** — how many stores had errors (needs attention)
-- 📊 **Bar chart** — payroll cost per store, so you can compare stores instantly
-- 📈 **Line chart** — payroll cost over time, so you can spot trends
+#### KPI Cards (the four headline numbers at the top)
+
+| Card | What It Shows | How It Is Calculated |
+|---|---|---|
+| 💶 **Total Payroll Cost** | The total amount paid out to all employees in the selected period | Sum of the **Waarde (Amount)** column across all stores and departments |
+| 👥 **Total Headcount** | How many unique employees were paid in the selected period | Count of distinct **Employee Numbers** in the data |
+| ✅ **Stores Imported OK** | How many stores sent their payroll data successfully | Count of stores with an Import Result of `"V"` (success) |
+| ❌ **Stores Failed** | How many stores had an error and did NOT send data | Count of stores with an Import Result of `"X"` (failed) |
+
+> 💡 **Plain English:** Think of these four cards like the dashboard of a car — they show you the most important numbers immediately, without needing to read a report.
+
+#### Chart 1 — Payroll Cost per Store (Bar Chart)
+
+| Element | Description |
+|---|---|
+| **X-axis (horizontal)** | Store name (e.g. "Amstelveen Rembrandtweg") |
+| **Y-axis (vertical)** | Total payroll cost in euros (€) |
+| **Each bar** | Represents one store; taller bar = higher wage cost |
+| **Colour coding** | Green = within expected budget range; Orange = above average; Red = significantly above average |
+| **Purpose** | Lets you instantly compare which stores cost more or less to run |
+
+#### Chart 2 — Payroll Cost Over Time (Line Chart)
+
+| Element | Description |
+|---|---|
+| **X-axis (horizontal)** | Pay period (week or month, e.g. "Week 14 2026") |
+| **Y-axis (vertical)** | Total payroll cost in euros (€) |
+| **Each point on the line** | The total wage cost for all stores in that period |
+| **Purpose** | Shows whether wage costs are going up, down, or staying stable over time |
 
 ---
 
 ### 5.2 Department / Cost Centre Breakdown
 *For: Finance Controller*
 
-This page answers: *"Where exactly is the money being spent?"*
+This page answers: *"Where exactly is the money being spent — which department or part of the business?"*
 
-- A table showing each department, its cost code, and how much was paid out
-- A bar chart of the top 10 most expensive departments
-- Filters so Finance can drill down by store, country, or time period
-- Overhead departments (internal codes starting with `099` or `99`) are shown separately so they don't inflate store labour costs
+#### Main Table — Cost by Department
+
+Each row in this table is one department. Here is what each column means:
+
+| Column | What It Shows | Example Value |
+|---|---|---|
+| **Department Code** | The unique code that identifies the department in the system | `30542`, `099-ADM` |
+| **Department Name** | The human-readable name of the department | `"Kitchen"`, `"Delivery"`, `"Management"` |
+| **Store Name** | Which Domino's store this department belongs to | `"Amstelveen Rembrandtweg"` |
+| **Country** | The country the store is in | `NL`, `BE`, `FR`, `DE`, `LU`, `DK` |
+| **Pay Period** | The week or month the cost was recorded for | `2026-W14` |
+| **Period Start Date** | The first day of the pay period | `06/04/2026` |
+| **Period End Date** | The last day of the pay period | `12/04/2026` |
+| **Total Cost (€)** | The total wage amount charged to this department in this period | `€ 4,250.00` |
+| **Employee Count** | How many employees had costs charged to this department | `12` |
+| **Cost Code** | The Nmbrs cost code used for this allocation (always `U2101`) | `U2101` |
+
+> ⚠️ **Note on Overhead Departments:** Department codes that start with `099` (5-digit) or `99` (4-digit) are internal overhead departments (e.g. head-office administration). These are **shown in a separate section** of this page so they do not make store labour costs look bigger than they really are.
+
+#### Chart — Top 10 Most Expensive Departments (Bar Chart)
+
+| Element | Description |
+|---|---|
+| **X-axis** | Department name |
+| **Y-axis** | Total cost (€) |
+| **Purpose** | Instantly see which 10 departments are spending the most |
 
 ---
 
 ### 5.3 Employee Detail Report
 *For: Payroll Administrator*
 
-This is a detailed table that shows every employee and what they were paid. It includes:
+This is the most detailed report — one row per employee per department per period. It shows exactly what each person was paid and how it was recorded.
 
-- Employee number and name reference
-- Which store they work at
-- Which department they are in
-- Their manager's name
-- The pay period dates
-- Each salary component (base pay, overtime, bonuses, etc.)
-- Total cost for that employee
+#### Column-by-Column Specification
 
-This page also **highlights employees who work at more than one store** (called "multi-store employees"), because their payroll needs special handling.
+| Column | Column Name | What It Means | Example Value |
+|---|---|---|---|
+| 1 | **Debtor Number** | The unique payroll ID assigned to the employee in the Nmbrs system. **Note:** For employees who work at multiple stores, this number may have been changed to a "canonical" (master) version — the original number is shown in the Multi-Store column | `10042` |
+| 2 | **Employee Number** | The employee's internal ID number from the store's database | `E00312` |
+| 3 | **Department Code** | The code for the department this employee works in | `30542-KIT` |
+| 4 | **Department Name** | The name of the department | `Kitchen` |
+| 5 | **Store Name** | The name of the Domino's store | `Amstelveen Rembrandtweg` |
+| 6 | **Country** | The country the store is in | `NL` |
+| 7 | **Period Start Date** | The first day of the pay period this record covers | `06/04/2026` |
+| 8 | **Period End Date** | The last day of the pay period (same as start date in weekly runs) | `06/04/2026` |
+| 9 | **Salary Code** | The Nmbrs code identifying the type of pay (e.g. base wage, overtime, bonus) | `U2101` |
+| 10 | **Amount (€)** | The euro value of this salary component for this employee in this period | `€ 352.00` |
+| 11 | **Manager Name** | The name of the manager responsible for this employee and department | `Jan de Vries` |
+| 12 | **Multi-Store Flag** | Shows `"Multi was (original number)"` if this employee works at more than one store and their debtor number was changed. Blank if not a multi-store employee | `Multi was 10041` |
+
+> 🔶 **Rows highlighted in orange** indicate that the employee's debtor number was adjusted because they work across more than one store. This is normal and expected — it does not mean an error.
+
+#### How to Read a Row (Plain English Example)
+
+> *"Employee E00312 worked in the Kitchen department at Amstelveen Rembrandtweg during the week of 6 April 2026. Their manager is Jan de Vries. They were paid €352.00 in base wages (salary code U2101). They are not a multi-store employee."*
 
 ---
 
 ### 5.4 Multi-Store Employee Report
 *For: Payroll Administrator, HR Manager*
 
-Some employees work across multiple Domino's stores. This page shows:
+Some employees work at more than one Domino's store in the same pay period. This causes a problem in payroll: if the same person appears twice (once per store), the system needs to know they are the same person. This report shows all such employees.
 
-- Which employees appear at more than one store
-- Their original employee reference and the remapped reference used in the system
-- The total cost across all their stores combined
-- A flag if any discrepancy is detected
+#### Column-by-Column Specification
+
+| Column | Column Name | What It Means | Example Value |
+|---|---|---|---|
+| 1 | **Employee Number** | The employee's ID number | `E00312` |
+| 2 | **Original Debtor Number** | The debtor number the employee had *before* any adjustment — as originally read from the store's database | `10041` |
+| 3 | **Canonical Debtor Number** | The "correct" master debtor number assigned to this employee in the MultiMW lookup table — this is what gets uploaded to Nmbrs | `10042` |
+| 4 | **Store 1 Name** | The first store this employee worked at | `Amstelveen Rembrandtweg` |
+| 5 | **Store 2 Name** | The second (or additional) store this employee worked at | `Amsterdam Centrum` |
+| 6 | **Total Cost Across All Stores (€)** | The sum of all wage costs for this employee across every store they worked at | `€ 615.00` |
+| 7 | **Lookup Match Status** | Whether this employee was found in the MultiMW lookup table. `"Matched"` = remapping applied correctly; `"Not Found"` = employee appears at multiple stores but is not in the lookup table (needs investigation) | `Matched` |
+
+> ⚠️ **Rows marked "Not Found"** need immediate attention from the Payroll Administrator. It means an employee is working at multiple stores but the system does not have a canonical debtor number for them. This must be added to the MultiMW lookup table before uploading to Nmbrs.
 
 ---
 
 ### 5.5 Data Quality / Operations Report
 *For: IT / Operations, Payroll Administrator*
 
-This page is the **health check** of the payroll run. It shows:
+This page is the **health check** of the payroll run. It tells you which stores are working correctly and which ones had problems.
 
-- A table of every store with its connection status (Connected / Failed)
-- Whether the store's data was imported successfully (✅ / ❌)
-- When the last successful run was completed
-- A percentage: "X out of Y stores imported successfully"
-- An alert if the same store has failed multiple times in a row
+#### Summary Bar at the Top
+
+| Indicator | What It Shows |
+|---|---|
+| **Total Stores** | How many stores are in the store master list |
+| **Stores Reachable** | How many stores responded to a network ping |
+| **Stores Imported OK** | How many stores had payroll data successfully extracted |
+| **Import Success Rate** | Percentage: e.g. `"47 out of 50 stores (94%)"` |
+| **Run Completed At** | The date and time the last payroll run finished |
+
+#### Main Table — Status per Store
+
+Each row is one Domino's store. Here is what each column means:
+
+| Column | Column Name | What It Means | Possible Values |
+|---|---|---|---|
+| 1 | **Store Number** | The 5-digit code that uniquely identifies the store | `30542` |
+| 2 | **Store Name** | The human-readable name of the store | `Amstelveen Rembrandtweg` |
+| 3 | **Country** | The country the store is in, determined automatically from the store number range | `NL`, `BE`, `FR`, `DE`, `LU`, `DK` |
+| 4 | **Network Status** | Was the store reachable over the network? | `Connected` ✅ or `Request timed out` ❌ or `Destination host unreachable` ❌ |
+| 5 | **Import Status** | Did the store's payroll data import successfully? | `✅ OK` (value `"V"`) or `❌ Failed` (value `"X"`) |
+| 6 | **Active in Run** | Was this store included in the last payroll run? | `Yes` or `No (deactivated)` |
+| 7 | **Last Successful Import** | The date and time of the most recent successful data import for this store | `07/04/2026 08:22` |
+| 8 | **Error Detail** | If the store failed, a brief description of what went wrong | `"SQL Server unavailable"`, `"Request timed out"`, blank if OK |
+
+> 🔴 **Rows highlighted in red** indicate stores that failed. These need immediate attention — the Payroll Administrator should investigate the network connection or database availability for those stores.
+
+#### Store Number → Country Reference
+
+The country of each store is automatically determined from its store number. This table explains the logic:
+
+| Store Number Range | Country | Example |
+|---|---|---|
+| 30540 – 31139 | 🇳🇱 Netherlands (NL) | `30542` → NL |
+| 31140 – 31639 | 🇧🇪 Belgium (BE) | `31200` → BE |
+| 31640 – 31659 | 🇱🇺 Luxembourg (LU) | `31650` → LU |
+| 31660 – 33659 | 🇫🇷 France (FR) | `32000` → FR |
+| 33710 – 34659 | 🇩🇪 Germany (DE) | `34000` → DE |
+| 27010 – 27150 | 🇩🇰 Denmark (DK) | `27050` → DK |
 
 ---
 
